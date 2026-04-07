@@ -797,42 +797,24 @@ Ovary<-readRDS('Ovary_17samples.rds')
 markers <- FindAllMarkers(Ovary, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 write.csv(markers,file="ovary17-10-0.1-cluster-markers-230216.csv")
 
+Ovary<- subset(Ovary, idents = c(0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11)) ###exclude cluster 4, which represents Ambient DNA cells without enriched marker genes###
 Ovary.renamed <- RenameIdents(Ovary, `0` = "Granulosa cells (Nppc-high)", `1` = "Stromal cells", `2` = "Granulosa cells (Inhbb-high)",
-                              `3` = "Theca cells", `4` = "Ambient DNA cells", `5` = "Epithelial cells", `6` = "Macrophage", `7` = "Endothelial cells", `8` = "Granulosa cells (Amh-high)", `9` = "Luteal cells",
+                              `3` = "Theca cells",  `5` = "Epithelial cells", `6` = "Macrophage", `7` = "Endothelial cells", `8` = "Granulosa cells (Amh-high)", `9` = "Luteal cells",
                               `10` = "Oocytes", `11` = "NK cells" )
 
 Idents(Ovary.renamed) <- factor(Idents(Ovary.renamed), levels = c("Granulosa cells (Amh-high)", "Granulosa cells (Inhbb-high)", 
-                                                                  "Granulosa cells (Nppc-high)",  "Luteal cells", "Theca cells", "Stromal cells", "Epithelial cells", "Endothelial cells", "Macrophage", "NK cells", "Oocytes", "Ambient DNA cells"))
-
-markers.to.plot <- c("Foxl2", "Amh", "Top2a", "Ube2c","Inhbb", "Npr2","Fshr","Cyp19a1","Inhba","Nppc","Nr5a2", "Lhcgr","Sfrp4","Ptgfr","S100a6", "Cyp17a1","Cyp11a1","Aldh1a1","Tcf21", "Mgp", "Dcn","Epcam", "Cdh5", "Lyz2", "Nkg7", "Ooep", "Lars2")
-DotPlot(Ovary.renamed, features = rev(markers.to.plot), cols = c("white","#fb000a"), dot.scale = 10) + RotatedAxis()
-
-markers.to.plot <- c( "Amh", "Inhbb","Top2a","Inhba","Nppc", "Sfrp4","S100a6", "Cyp11a1","Aldh1a1", "Tcf21", "Epcam", "Cdh5", "Lyz2", "Nkg7", "Ooep", "Lars2")
-DotPlot(Ovary.renamed, features = rev(markers.to.plot), cols = c("white","#fb000a"), dot.scale = 10) + RotatedAxis()
-
-
-FeaturePlot(Ovary.renamed, features = c("Amh", "Inhbb","Top2a","Inhba","Nppc", "Sfrp4","S100a6", "Cyp11a1","Aldh1a1", "Tcf21", "Epcam", "Cdh5", "Lyz2", "Nkg7", "Ooep", "Lars2", "Cyp17a1"), min.cutoff = "q9")
+                                                                  "Granulosa cells (Nppc-high)",  "Luteal cells", "Theca cells", "Stromal cells", "Epithelial cells", "Endothelial cells", "Macrophage", "NK cells", "Oocytes"))
 
 saveRDS(Ovary.renamed, file = "Ovary_17samples-clustered.rds")
 
+###Cell proportion analysis###
 cellnumber<-table(Ovary.renamed$orig.ident)
-write.csv(cellnumber, "cellnumber-YMO_18sample.csv")
+write.csv(cellnumber, "cellnumber-YMO.csv")
 cellcount<-table(Idents(Ovary.renamed),Ovary.renamed$orig.ident)
-write.csv(cellcount, "cellcount——cluster-YMO_18sample.csv")
-
-############################GC_subset_analysis
-GC_subset<-readRDS('GC_renamed.rds')
-cellnumber_GC<-table(GC_subset$orig.ident)
-write.csv(cellnumber_GC, "cellnumber_GC.csv")
-cellcount_GC<-table(Idents(GC_subset),GC_subset$orig.ident)
-write.csv(cellcount_GC, "cellcount_GC_cluster.csv")
-VlnPlot(GC_subset, features = c("Cdkn1b"))
-VlnPlot(GC_subset, features = c("Cyp19a1", "Amh", "Fshr","Inhbb"),split.by = "age")
-
+write.csv(cellcount, "cellcount-cluster-YMO.csv")
 
 ############################DEG_O VS Y
 Ovary.renamed<-readRDS('Ovary_17samples-clustered.rds')
-BiocManager::install ("MAST") 
 library(MAST)
 OvsY_GC_A <- FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Granulosa cells (Amh-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
 OvsY_GC_I<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Granulosa cells (Inhbb-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
@@ -845,8 +827,6 @@ OvsY_EC<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "
 OvsY_M<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Macrophage",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
 OvsY_NK<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "NK cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
 OvsY_O<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Oocytes",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
-OvsY_L2<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Lars2-high cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
-
 write.table(OvsY_GC_A,"OvsY_GC_A",sep="\t")
 write.table(OvsY_GC_I,"OvsY_GC_I",sep="\t")
 write.table(OvsY_GC_N,"OvsY_GC_N",sep="\t")
@@ -858,7 +838,6 @@ write.table(OvsY_EC,"OvsY_EC",sep="\t")
 write.table(OvsY_M,"OvsY_M",sep="\t")
 write.table(OvsY_NK,"OvsY_NK",sep="\t")
 write.table(OvsY_O,"OvsY_O",sep="\t")
-write.table(OvsY_L2,"OvsY_L2",sep="\t")
 
 all.genes <- rownames(Ovary.renamed)
 OvsY_GC_A_logfc<-FindMarkers(Ovary.renamed,subset.ident = "Granulosa cells (Amh-high)",ident.1 = "O",ident.2 = "Y",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
@@ -872,7 +851,6 @@ OvsY_EC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ide
 OvsY_M_logfc<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Macrophage",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
 OvsY_NK_logfc<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "NK cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
 OvsY_O_logfc<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Oocytes",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
-OvsY_L2_logfc<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Lars2-high cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
 
 write.table(OvsY_GC_A_logfc,"OvsY_GC_A_logfc",sep="\t")
 write.table(OvsY_GC_I_logfc,"OvsY_GC_I_logfc",sep="\t")
@@ -885,10 +863,8 @@ write.table(OvsY_EC_logfc,"OvsY_EC_logfc",sep="\t")
 write.table(OvsY_M_logfc,"OvsY_M_logfc",sep="\t")
 write.table(OvsY_NK_logfc,"OvsY_NK_logfc",sep="\t")
 write.table(OvsY_O_logfc,"OvsY_O_logfc",sep="\t")
-write.table(OvsY_L2_logfc,"OvsY_L2_logfc",sep="\t")
 
-#############################Mir vs Mr
-
+#############################DEG_Mir vs Mr
 MirvsMr_GC_A <- FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Granulosa cells (Amh-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
 MirvsMr_GC_I<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Granulosa cells (Inhbb-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
 MirvsMr_GC_N<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Granulosa cells (Nppc-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
@@ -900,7 +876,6 @@ MirvsMr_EC<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.i
 MirvsMr_M<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Macrophage",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
 MirvsMr_NK<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "NK cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
 MirvsMr_O<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Oocytes",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
-MirvsMr_L2<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Lars2-high cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
 
 write.table(MirvsMr_GC_A,"MirvsMr_GC_A",sep="\t")
 write.table(MirvsMr_GC_I,"MirvsMr_GC_I",sep="\t")
@@ -913,8 +888,6 @@ write.table(MirvsMr_EC,"MirvsMr_EC",sep="\t")
 write.table(MirvsMr_M,"MirvsMr_M",sep="\t")
 write.table(MirvsMr_NK,"MirvsMr_NK",sep="\t")
 write.table(MirvsMr_O,"MirvsMr_O",sep="\t")
-write.table(MirvsMr_L2,"MirvsMr_L2",sep="\t")
-
 
 MirvsMr_GC_A_logfc<-FindMarkers(Ovary.renamed,subset.ident = "Granulosa cells (Amh-high)",ident.1 = "M_ir",ident.2 = "M_r",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
 MirvsMr_GC_I_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Granulosa cells (Inhbb-high)",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
@@ -927,7 +900,6 @@ MirvsMr_EC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",su
 MirvsMr_M_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Macrophage",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
 MirvsMr_NK_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "NK cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
 MirvsMr_O_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Oocytes",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
-MirvsMr_L2_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Lars2-high cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
 
 write.table(MirvsMr_GC_A_logfc,"MirvsMr_GC_A_logfc",sep="\t")
 write.table(MirvsMr_GC_I_logfc,"MirvsMr_GC_I_logfc",sep="\t")
@@ -940,9 +912,8 @@ write.table(MirvsMr_EC_logfc,"MirvsMr_EC_logfc",sep="\t")
 write.table(MirvsMr_M_logfc,"MirvsMr_M_logfc",sep="\t")
 write.table(MirvsMr_NK_logfc,"MirvsMr_NK_logfc",sep="\t")
 write.table(MirvsMr_O_logfc,"MirvsMr_O_logfc",sep="\t")
-write.table(MirvsMr_L2_logfc,"MirvsMr_L2_logfc",sep="\t")
 
-#############################M vs Y
+#############################DEG_M vs Y
 MvsY_GC_A <- FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Granulosa cells (Amh-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
 MvsY_GC_I<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Granulosa cells (Inhbb-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
 MvsY_GC_N<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Granulosa cells (Nppc-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
@@ -954,7 +925,6 @@ MvsY_EC<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "
 MvsY_M<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Macrophage",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
 MvsY_NK<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "NK cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
 MvsY_O<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Oocytes",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
-MvsY_L2<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Lars2-high cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
 
 write.table(MvsY_GC_A,"MvsY_GC_A",sep="\t")
 write.table(MvsY_GC_I,"MvsY_GC_I",sep="\t")
@@ -967,7 +937,6 @@ write.table(MvsY_EC,"MvsY_EC",sep="\t")
 write.table(MvsY_M,"MvsY_M",sep="\t")
 write.table(MvsY_NK,"MvsY_NK",sep="\t")
 write.table(MvsY_O,"MvsY_O",sep="\t")
-write.table(MvsY_L2,"MvsY_L2",sep="\t")
 
 all.genes <- rownames(Ovary.renamed)
 MrvsY_GC_A_logfc<-FindMarkers(Ovary.renamed,subset.ident = "Granulosa cells (Amh-high)",ident.1 = "M_r",ident.2 = "Y",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
@@ -981,7 +950,6 @@ MrvsY_EC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_r", ident.2 ="Y",subset.
 MrvsY_M_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_r", ident.2 ="Y",subset.ident = "Macrophage",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
 MrvsY_NK_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_r", ident.2 ="Y",subset.ident = "NK cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
 MrvsY_O_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_r", ident.2 ="Y",subset.ident = "Oocytes",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
-MrvsY_L2_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_r", ident.2 ="Y",subset.ident = "Lars2-high cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
 
 write.table(MrvsY_GC_A_logfc,"MrvsY_GC_A_logfc",sep="\t")
 write.table(MrvsY_GC_I_logfc,"MrvsY_GC_I_logfc",sep="\t")
@@ -994,9 +962,8 @@ write.table(MrvsY_EC_logfc,"MrvsY_EC_logfc",sep="\t")
 write.table(MrvsY_M_logfc,"MrvsY_M_logfc",sep="\t")
 write.table(MrvsY_NK_logfc,"MrvsY_NK_logfc",sep="\t")
 write.table(MrvsY_O_logfc,"MrvsY_O_logfc",sep="\t")
-write.table(MrvsY_L2_logfc,"MrvsY_L2_logfc",sep="\t")
 
-##########################Cdkn1a+ cell
+##########################Cdkn1a+ senescent cells
 Ovary.renamed<-readRDS('Ovary_17samples-clustered.rds')
 DimPlot(Ovary.renamed)
 Cdkn1a_Ovary1<-subset(Ovary.renamed, subset = Cdkn1a > 1)
@@ -1008,5 +975,4 @@ write.csv(cellcount_Cdkn1a_Ovary1, "cellcount_Cdkn1a_Ovary1.csv")
 cellcount_Cdkn2a_Ovary1<-table(Idents(Cdkn2a_Ovary1),Cdkn2a_Ovary1$orig.ident)
 write.csv(cellcount_Cdkn2a_Ovary1, "cellcount_Cdkn2a_Ovary1.csv")
 
-##################################delete Lars2
 
