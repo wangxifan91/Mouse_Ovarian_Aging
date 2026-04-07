@@ -1,0 +1,1023 @@
+library(Seurat)
+library(DoubletFinder)
+library(dplyr)
+library(stringr)
+library(cowplot)
+#############################
+Y_r_1.data <- Read10X(data.dir = "~/scRNA/Y-r-1")
+Y_r_1 <- CreateSeuratObject(Y_r_1.data, min.cells = 1)
+Y_r_1@meta.data$age<- c("Y")
+Y_r_1@meta.data$group<- c("Y")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+Y_r_1[["percent.mt"]] <- PercentageFeatureSet(Y_r_1, pattern = "^mt-")
+Y_r_1 <- subset(Y_r_1, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+Y_r_1 <- NormalizeData(Y_r_1)
+Y_r_1 <- FindVariableFeatures(Y_r_1, selection.method = "vst", nfeatures = 2000)
+Y_r_1 <- ScaleData(Y_r_1)
+Y_r_1 <- RunPCA(Y_r_1, verbose = FALSE)
+Y_r_1 <- FindNeighbors(Y_r_1, reduction = "pca", dims = 1:15)
+Y_r_1 <- FindClusters(Y_r_1, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+Y_r_1 <- RunUMAP(Y_r_1, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(Y_r_1, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- Y_r_1@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.0334*nrow(Y_r_1@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+Y_r_1 <- doubletFinder_v3(Y_r_1, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+Y_r_1 <- doubletFinder_v3(Y_r_1, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(Y_r_1@meta.data$DF.classifications_0.25_0.005_114)
+Y_r_1@meta.data$Doublet <- Y_r_1@meta.data$DF.classifications_0.25_0.005_114
+pdf('~/Ovary/Y_r_1.pdf',width=6,height=6)
+DimPlot(Y_r_1, reduction = "umap", group.by='DF.classifications_0.25_0.005_114')
+dev.off()
+
+###########################
+
+Y_r_2.data <- Read10X(data.dir = "~/scRNA/Y-r-2")
+Y_r_2 <- CreateSeuratObject(Y_r_2.data, min.cells = 1)
+Y_r_2@meta.data$age<- c("Y")
+Y_r_2@meta.data$group<- c("Y")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+Y_r_2[["percent.mt"]] <- PercentageFeatureSet(Y_r_2, pattern = "^mt-")
+Y_r_2 <- subset(Y_r_2, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+Y_r_2 <- NormalizeData(Y_r_2)
+Y_r_2 <- FindVariableFeatures(Y_r_2, selection.method = "vst", nfeatures = 2000)
+Y_r_2 <- ScaleData(Y_r_2)
+Y_r_2 <- RunPCA(Y_r_2, verbose = FALSE)
+Y_r_2 <- FindNeighbors(Y_r_2, reduction = "pca", dims = 1:15)
+Y_r_2 <- FindClusters(Y_r_2, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+Y_r_2 <- RunUMAP(Y_r_2, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(Y_r_2, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- Y_r_2@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.044*nrow(Y_r_2@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+Y_r_2 <- doubletFinder_v3(Y_r_2, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+Y_r_2 <- doubletFinder_v3(Y_r_2, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(Y_r_2@meta.data$DF.classifications_0.25_0.29_188)
+Y_r_2@meta.data$Doublet <- Y_r_2@meta.data$DF.classifications_0.25_0.29_188
+pdf('~/Ovary/Y_r_2.pdf',width=6,height=6)
+DimPlot(Y_r_2, reduction = "umap", group.by='Doublet')
+dev.off()
+
+###########################
+
+Y_r_3.data <- Read10X(data.dir = "~/scRNA/Y-r-3")
+Y_r_3 <- CreateSeuratObject(Y_r_3.data, min.cells = 1)
+Y_r_3@meta.data$age<- c("Y")
+Y_r_3@meta.data$group<- c("Y")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+Y_r_3[["percent.mt"]] <- PercentageFeatureSet(Y_r_3, pattern = "^mt-")
+Y_r_3 <- subset(Y_r_3, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+Y_r_3 <- NormalizeData(Y_r_3)
+Y_r_3 <- FindVariableFeatures(Y_r_3, selection.method = "vst", nfeatures = 2000)
+Y_r_3 <- ScaleData(Y_r_3)
+Y_r_3 <- RunPCA(Y_r_3, verbose = FALSE)
+Y_r_3 <- FindNeighbors(Y_r_3, reduction = "pca", dims = 1:15)
+Y_r_3 <- FindClusters(Y_r_3, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+Y_r_3 <- RunUMAP(Y_r_3, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(Y_r_3, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- Y_r_3@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.041*nrow(Y_r_3@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+Y_r_3 <- doubletFinder_v3(Y_r_3, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+Y_r_3 <- doubletFinder_v3(Y_r_3, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(Y_r_3@meta.data$DF.classifications_0.25_0.005_169)
+Y_r_3@meta.data$Doublet <- Y_r_3@meta.data$DF.classifications_0.25_0.005_169
+pdf('~/Ovary/Y_r_3.pdf',width=6,height=6)
+DimPlot(Y_r_3, reduction = "umap", group.by='Doublet')
+dev.off()
+
+############################
+
+Y_r_4.data <- Read10X(data.dir = "~/scRNA/Y-r-4")
+Y_r_4 <- CreateSeuratObject(Y_r_4.data, min.cells = 1)
+Y_r_4@meta.data$age<- c("Y")
+Y_r_4@meta.data$group<- c("Y")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+Y_r_4[["percent.mt"]] <- PercentageFeatureSet(Y_r_4, pattern = "^mt-")
+Y_r_4 <- subset(Y_r_4, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+Y_r_4 <- NormalizeData(Y_r_4)
+Y_r_4 <- FindVariableFeatures(Y_r_4, selection.method = "vst", nfeatures = 2000)
+Y_r_4 <- ScaleData(Y_r_4)
+Y_r_4 <- RunPCA(Y_r_4, verbose = FALSE)
+Y_r_4 <- FindNeighbors(Y_r_4, reduction = "pca", dims = 1:15)
+Y_r_4 <- FindClusters(Y_r_4, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+Y_r_4 <- RunUMAP(Y_r_4, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(Y_r_4, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- Y_r_4@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.03*nrow(Y_r_4@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+Y_r_4 <- doubletFinder_v3(Y_r_4, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+Y_r_4 <- doubletFinder_v3(Y_r_4, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(Y_r_4@meta.data$DF.classifications_0.25_0.005_92)
+Y_r_4@meta.data$Doublet <- Y_r_4@meta.data$DF.classifications_0.25_0.005_92
+pdf('~/Ovary/Y_r_4.pdf',width=6,height=6)
+DimPlot(Y_r_4, reduction = "umap", group.by='Doublet')
+dev.off()
+
+#############################
+
+Y_r_5.data <- Read10X(data.dir = "~/scRNA/Y-r-5")
+Y_r_5 <- CreateSeuratObject(Y_r_5.data, min.cells = 1)
+Y_r_5@meta.data$age<- c("Y")
+Y_r_5@meta.data$group<- c("Y")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+Y_r_5[["percent.mt"]] <- PercentageFeatureSet(Y_r_5, pattern = "^mt-")
+Y_r_5 <- subset(Y_r_5, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+Y_r_5 <- NormalizeData(Y_r_5)
+Y_r_5 <- FindVariableFeatures(Y_r_5, selection.method = "vst", nfeatures = 2000)
+Y_r_5 <- ScaleData(Y_r_5)
+Y_r_5 <- RunPCA(Y_r_5, verbose = FALSE)
+Y_r_5 <- FindNeighbors(Y_r_5, reduction = "pca", dims = 1:15)
+Y_r_5 <- FindClusters(Y_r_5, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+Y_r_5 <- RunUMAP(Y_r_5, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(Y_r_5, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- Y_r_5@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.055*nrow(Y_r_5@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+Y_r_5 <- doubletFinder_v3(Y_r_5, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+Y_r_5 <- doubletFinder_v3(Y_r_5, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(Y_r_5@meta.data$DF.classifications_0.25_0.25_326)
+Y_r_5@meta.data$Doublet <- Y_r_5@meta.data$DF.classifications_0.25_0.25_326
+pdf('~/Ovary/Y_r_5.pdf',width=6,height=6)
+DimPlot(Y_r_5, reduction = "umap", group.by='Doublet')
+dev.off()
+
+##############################
+
+M_r_1.data <- Read10X(data.dir = "~/scRNA/M-r-1")
+M_r_1 <- CreateSeuratObject(M_r_1.data, min.cells = 1)
+M_r_1@meta.data$age<- c("M")
+M_r_1@meta.data$group<- c("M_r")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+M_r_1[["percent.mt"]] <- PercentageFeatureSet(M_r_1, pattern = "^mt-")
+M_r_1 <- subset(M_r_1, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+M_r_1 <- NormalizeData(M_r_1)
+M_r_1 <- FindVariableFeatures(M_r_1, selection.method = "vst", nfeatures = 2000)
+M_r_1 <- ScaleData(M_r_1)
+M_r_1 <- RunPCA(M_r_1, verbose = FALSE)
+M_r_1 <- FindNeighbors(M_r_1, reduction = "pca", dims = 1:15)
+M_r_1 <- FindClusters(M_r_1, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+M_r_1 <- RunUMAP(M_r_1, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(M_r_1, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- M_r_1@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.046*nrow(M_r_1@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+M_r_1 <- doubletFinder_v3(M_r_1, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+M_r_1 <- doubletFinder_v3(M_r_1, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(M_r_1@meta.data$DF.classifications_0.25_0.3_210)
+M_r_1@meta.data$Doublet <- M_r_1@meta.data$DF.classifications_0.25_0.3_210
+pdf('~/Ovary/M_r_1.pdf',width=6,height=6)
+DimPlot(M_r_1, reduction = "umap", group.by='Doublet')
+dev.off()
+
+##########################
+
+M_r_2.data <- Read10X(data.dir = "~/scRNA/M-r-2")
+M_r_2 <- CreateSeuratObject(M_r_2.data, min.cells = 1)
+M_r_2@meta.data$age<- c("M")
+M_r_2@meta.data$group<- c("M_r")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+M_r_2[["percent.mt"]] <- PercentageFeatureSet(M_r_2, pattern = "^mt-")
+M_r_2 <- subset(M_r_2, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+M_r_2 <- NormalizeData(M_r_2)
+M_r_2 <- FindVariableFeatures(M_r_2, selection.method = "vst", nfeatures = 2000)
+M_r_2 <- ScaleData(M_r_2)
+M_r_2 <- RunPCA(M_r_2, verbose = FALSE)
+M_r_2 <- FindNeighbors(M_r_2, reduction = "pca", dims = 1:15)
+M_r_2 <- FindClusters(M_r_2, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+M_r_2 <- RunUMAP(M_r_2, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(M_r_2, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- M_r_2@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.034*nrow(M_r_2@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+M_r_2 <- doubletFinder_v3(M_r_2, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+M_r_2 <- doubletFinder_v3(M_r_2, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(M_r_2@meta.data$DF.classifications_0.25_0.3_106)
+M_r_2@meta.data$Doublet <- M_r_2@meta.data$DF.classifications_0.25_0.3_106
+pdf('~/Ovary/M_r_2.pdf',width=6,height=6)
+DimPlot(M_r_2, reduction = "umap", group.by='Doublet')
+dev.off()
+
+#########################
+
+M_r_3.data <- Read10X(data.dir = "~/scRNA/M-r-3")
+M_r_3 <- CreateSeuratObject(M_r_3.data, min.cells = 1)
+M_r_3@meta.data$age<- c("M")
+M_r_3@meta.data$group<- c("M_r")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+M_r_3[["percent.mt"]] <- PercentageFeatureSet(M_r_3, pattern = "^mt-")
+M_r_3 <- subset(M_r_3, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+M_r_3 <- NormalizeData(M_r_3)
+M_r_3 <- FindVariableFeatures(M_r_3, selection.method = "vst", nfeatures = 2000)
+M_r_3 <- ScaleData(M_r_3)
+M_r_3 <- RunPCA(M_r_3, verbose = FALSE)
+M_r_3 <- FindNeighbors(M_r_3, reduction = "pca", dims = 1:15)
+M_r_3 <- FindClusters(M_r_3, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+M_r_3 <- RunUMAP(M_r_3, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(M_r_3, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- M_r_3@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.0276*nrow(M_r_3@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+M_r_3 <- doubletFinder_v3(M_r_3, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+M_r_3 <- doubletFinder_v3(M_r_3, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(M_r_3@meta.data$DF.classifications_0.25_0.04_78)
+M_r_3@meta.data$Doublet <- M_r_3@meta.data$DF.classifications_0.25_0.04_78
+pdf('~/Ovary/M_r_3.pdf',width=6,height=6)
+DimPlot(M_r_3, reduction = "umap", group.by='Doublet')
+dev.off()
+
+#########################
+
+M_ir_1.data <- Read10X(data.dir = "~/scRNA/M-ir-1")
+M_ir_1 <- CreateSeuratObject(M_ir_1.data, min.cells = 1)
+M_ir_1@meta.data$age<- c("M")
+M_ir_1@meta.data$group<- c("M_ir")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+M_ir_1[["percent.mt"]] <- PercentageFeatureSet(M_ir_1, pattern = "^mt-")
+M_ir_1 <- subset(M_ir_1, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+M_ir_1 <- NormalizeData(M_ir_1)
+M_ir_1 <- FindVariableFeatures(M_ir_1, selection.method = "vst", nfeatures = 2000)
+M_ir_1 <- ScaleData(M_ir_1)
+M_ir_1 <- RunPCA(M_ir_1, verbose = FALSE)
+M_ir_1 <- FindNeighbors(M_ir_1, reduction = "pca", dims = 1:15)
+M_ir_1 <- FindClusters(M_ir_1, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+M_ir_1 <- RunUMAP(M_ir_1, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(M_ir_1, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- M_ir_1@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.047*nrow(M_ir_1@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+M_ir_1 <- doubletFinder_v3(M_ir_1, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+M_ir_1 <- doubletFinder_v3(M_ir_1, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(M_ir_1@meta.data$DF.classifications_0.25_0.17_227)
+M_ir_1@meta.data$Doublet <- M_ir_1@meta.data$DF.classifications_0.25_0.17_227
+pdf('~/Ovary/M_ir_1.pdf',width=6,height=6)
+DimPlot(M_ir_1, reduction = "umap", group.by='Doublet')
+dev.off()
+
+#########################
+
+M_ir_2.data <- Read10X(data.dir = "~/scRNA/M-ir-2")
+M_ir_2 <- CreateSeuratObject(M_ir_2.data, min.cells = 1)
+M_ir_2@meta.data$age<- c("M")
+M_ir_2@meta.data$group<- c("M_ir")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+M_ir_2[["percent.mt"]] <- PercentageFeatureSet(M_ir_2, pattern = "^mt-")
+M_ir_2 <- subset(M_ir_2, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+M_ir_2 <- NormalizeData(M_ir_2)
+M_ir_2 <- FindVariableFeatures(M_ir_2, selection.method = "vst", nfeatures = 2000)
+M_ir_2 <- ScaleData(M_ir_2)
+M_ir_2 <- RunPCA(M_ir_2, verbose = FALSE)
+M_ir_2 <- FindNeighbors(M_ir_2, reduction = "pca", dims = 1:15)
+M_ir_2 <- FindClusters(M_ir_2, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+M_ir_2 <- RunUMAP(M_ir_2, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(M_ir_2, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- M_ir_2@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.032*nrow(M_ir_2@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+M_ir_2 <- doubletFinder_v3(M_ir_2, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+M_ir_2 <- doubletFinder_v3(M_ir_2, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(M_ir_2@meta.data$DF.classifications_0.25_0.03_90)
+M_ir_2@meta.data$Doublet <- M_ir_2@meta.data$DF.classifications_0.25_0.03_90
+pdf('~/Ovary/M_ir_2.pdf',width=6,height=6)
+DimPlot(M_ir_2, reduction = "umap", group.by='Doublet')
+dev.off()
+
+##########################
+
+M_ir_3.data <- Read10X(data.dir = "~/scRNA/M-ir-3")
+M_ir_3 <- CreateSeuratObject(M_ir_3.data, min.cells = 1)
+M_ir_3@meta.data$age<- c("M")
+M_ir_3@meta.data$group<- c("M_ir")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+M_ir_3[["percent.mt"]] <- PercentageFeatureSet(M_ir_3, pattern = "^mt-")
+M_ir_3 <- subset(M_ir_3, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+M_ir_3 <- NormalizeData(M_ir_3)
+M_ir_3 <- FindVariableFeatures(M_ir_3, selection.method = "vst", nfeatures = 2000)
+M_ir_3 <- ScaleData(M_ir_3)
+M_ir_3 <- RunPCA(M_ir_3, verbose = FALSE)
+M_ir_3 <- FindNeighbors(M_ir_3, reduction = "pca", dims = 1:15)
+M_ir_3 <- FindClusters(M_ir_3, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+M_ir_3 <- RunUMAP(M_ir_3, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(M_ir_3, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- M_ir_3@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.0497*nrow(M_ir_3@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+M_ir_3 <- doubletFinder_v3(M_ir_3, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+M_ir_3 <- doubletFinder_v3(M_ir_3, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(M_ir_3@meta.data$DF.classifications_0.25_0.25_262)
+M_ir_3@meta.data$Doublet <- M_ir_3@meta.data$DF.classifications_0.25_0.25_262
+pdf('~/Ovary/M_ir_3.pdf',width=6,height=6)
+DimPlot(M_ir_3, reduction = "umap", group.by='Doublet')
+dev.off()
+
+#############################
+
+M_ir_4.data <- Read10X(data.dir = "~/scRNA/M-ir-4")
+M_ir_4 <- CreateSeuratObject(M_ir_4.data, min.cells = 1)
+M_ir_4@meta.data$age<- c("M")
+M_ir_4@meta.data$group<- c("M_ir")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+M_ir_4[["percent.mt"]] <- PercentageFeatureSet(M_ir_4, pattern = "^mt-")
+M_ir_4 <- subset(M_ir_4, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+M_ir_4 <- NormalizeData(M_ir_4)
+M_ir_4 <- FindVariableFeatures(M_ir_4, selection.method = "vst", nfeatures = 2000)
+M_ir_4 <- ScaleData(M_ir_4)
+M_ir_4 <- RunPCA(M_ir_4, verbose = FALSE)
+M_ir_4 <- FindNeighbors(M_ir_4, reduction = "pca", dims = 1:15)
+M_ir_4 <- FindClusters(M_ir_4, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+M_ir_4 <- RunUMAP(M_ir_4, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(M_ir_4, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- M_ir_4@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.028*nrow(M_ir_4@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+M_ir_4 <- doubletFinder_v3(M_ir_4, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+M_ir_4 <- doubletFinder_v3(M_ir_4, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(M_ir_4@meta.data$DF.classifications_0.25_0.19_83)
+M_ir_4@meta.data$Doublet <- M_ir_4@meta.data$DF.classifications_0.25_0.19_83
+pdf('~/Ovary/M_ir_4.pdf',width=6,height=6)
+DimPlot(M_ir_4, reduction = "umap", group.by='Doublet')
+dev.off()
+
+##########################
+
+O_a_1.data <- Read10X(data.dir = "~/scRNA/O-a-1")
+O_a_1 <- CreateSeuratObject(O_a_1.data, min.cells = 1)
+O_a_1@meta.data$age<- c("O")
+O_a_1@meta.data$group<- c("o")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+O_a_1[["percent.mt"]] <- PercentageFeatureSet(O_a_1, pattern = "^mt-")
+O_a_1 <- subset(O_a_1, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+O_a_1 <- NormalizeData(O_a_1)
+O_a_1 <- FindVariableFeatures(O_a_1, selection.method = "vst", nfeatures = 2000)
+O_a_1 <- ScaleData(O_a_1)
+O_a_1 <- RunPCA(O_a_1, verbose = FALSE)
+O_a_1 <- FindNeighbors(O_a_1, reduction = "pca", dims = 1:15)
+O_a_1 <- FindClusters(O_a_1, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+O_a_1 <- RunUMAP(O_a_1, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(O_a_1, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- O_a_1@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.050*nrow(O_a_1@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+O_a_1 <- doubletFinder_v3(O_a_1, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+O_a_1 <- doubletFinder_v3(O_a_1, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(O_a_1@meta.data$DF.classifications_0.25_0.2_235)
+O_a_1@meta.data$Doublet <- O_a_1@meta.data$DF.classifications_0.25_0.2_235
+pdf('~/Ovary/O_a_1.pdf',width=6,height=6)
+DimPlot(O_a_1, reduction = "umap", group.by='Doublet')
+dev.off()
+
+######################
+
+O_a_2.data <- Read10X(data.dir = "~/scRNA/O-a-2")
+O_a_2 <- CreateSeuratObject(O_a_2.data, min.cells = 1)
+O_a_2@meta.data$age<- c("O")
+O_a_2@meta.data$group<- c("o")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+O_a_2[["percent.mt"]] <- PercentageFeatureSet(O_a_2, pattern = "^mt-")
+O_a_2 <- subset(O_a_2, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+O_a_2 <- NormalizeData(O_a_2)
+O_a_2 <- FindVariableFeatures(O_a_2, selection.method = "vst", nfeatures = 2000)
+O_a_2 <- ScaleData(O_a_2)
+O_a_2 <- RunPCA(O_a_2, verbose = FALSE)
+O_a_2 <- FindNeighbors(O_a_2, reduction = "pca", dims = 1:15)
+O_a_2 <- FindClusters(O_a_2, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+O_a_2 <- RunUMAP(O_a_2, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(O_a_2, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- O_a_2@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.026*nrow(O_a_2@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+O_a_2 <- doubletFinder_v3(O_a_2, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+O_a_2 <- doubletFinder_v3(O_a_2, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(O_a_2@meta.data$DF.classifications_0.25_0.17_64)
+O_a_2@meta.data$Doublet <- O_a_2@meta.data$DF.classifications_0.25_0.17_64
+pdf('~/Ovary/O_a_2.pdf',width=6,height=6)
+DimPlot(O_a_2, reduction = "umap", group.by='Doublet')
+dev.off()
+
+#########################
+
+O_a_3.data <- Read10X(data.dir = "~/scRNA/O-a-3")
+O_a_3 <- CreateSeuratObject(O_a_3.data, min.cells = 1)
+O_a_3@meta.data$age<- c("O")
+O_a_3@meta.data$group<- c("o")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+O_a_3[["percent.mt"]] <- PercentageFeatureSet(O_a_3, pattern = "^mt-")
+O_a_3 <- subset(O_a_3, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+O_a_3 <- NormalizeData(O_a_3)
+O_a_3 <- FindVariableFeatures(O_a_3, selection.method = "vst", nfeatures = 2000)
+O_a_3 <- ScaleData(O_a_3)
+O_a_3 <- RunPCA(O_a_3, verbose = FALSE)
+O_a_3 <- FindNeighbors(O_a_3, reduction = "pca", dims = 1:15)
+O_a_3 <- FindClusters(O_a_3, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+O_a_3 <- RunUMAP(O_a_3, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(O_a_3, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- O_a_3@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.031*nrow(O_a_3@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+O_a_3 <- doubletFinder_v3(O_a_3, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+O_a_3 <- doubletFinder_v3(O_a_3, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(O_a_3@meta.data$DF.classifications_0.25_0.005_84)
+O_a_3@meta.data$Doublet <- O_a_3@meta.data$DF.classifications_0.25_0.005_84
+pdf('~/Ovary/O_a_3.pdf',width=6,height=6)
+DimPlot(O_a_3, reduction = "umap", group.by='Doublet')
+dev.off()
+
+############################
+
+O_a_4.data <- Read10X(data.dir = "~/scRNA/O-a-4")
+O_a_4 <- CreateSeuratObject(O_a_4.data, min.cells = 1)
+O_a_4@meta.data$age<- c("O")
+O_a_4@meta.data$group<- c("o")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+O_a_4[["percent.mt"]] <- PercentageFeatureSet(O_a_4, pattern = "^mt-")
+O_a_4 <- subset(O_a_4, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+O_a_4 <- NormalizeData(O_a_4)
+O_a_4 <- FindVariableFeatures(O_a_4, selection.method = "vst", nfeatures = 2000)
+O_a_4 <- ScaleData(O_a_4)
+O_a_4 <- RunPCA(O_a_4, verbose = FALSE)
+O_a_4 <- FindNeighbors(O_a_4, reduction = "pca", dims = 1:15)
+O_a_4 <- FindClusters(O_a_4, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+O_a_4 <- RunUMAP(O_a_4, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(O_a_4, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- O_a_4@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.021*nrow(O_a_4@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+O_a_4 <- doubletFinder_v3(O_a_4, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+O_a_4 <- doubletFinder_v3(O_a_4, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(O_a_4@meta.data$DF.classifications_0.25_0.13_35)
+O_a_4@meta.data$Doublet <- O_a_4@meta.data$DF.classifications_0.25_0.13_35
+pdf('~/Ovary/O_a_4.pdf',width=6,height=6)
+DimPlot(O_a_4, reduction = "umap", group.by='Doublet')
+dev.off()
+
+########################
+
+O_a_5.data <- Read10X(data.dir = "~/scRNA/O-a-5")
+O_a_5 <- CreateSeuratObject(O_a_5.data, min.cells = 1)
+O_a_5@meta.data$age<- c("O")
+O_a_5@meta.data$group<- c("o")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+O_a_5[["percent.mt"]] <- PercentageFeatureSet(O_a_5, pattern = "^mt-")
+O_a_5 <- subset(O_a_5, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+O_a_5 <- NormalizeData(O_a_5)
+O_a_5 <- FindVariableFeatures(O_a_5, selection.method = "vst", nfeatures = 2000)
+O_a_5 <- ScaleData(O_a_5)
+O_a_5 <- RunPCA(O_a_5, verbose = FALSE)
+O_a_5 <- FindNeighbors(O_a_5, reduction = "pca", dims = 1:15)
+O_a_5 <- FindClusters(O_a_5, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+O_a_5 <- RunUMAP(O_a_5, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(O_a_5, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- O_a_5@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.028*nrow(O_a_5@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+O_a_5 <- doubletFinder_v3(O_a_5, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+O_a_5 <- doubletFinder_v3(O_a_5, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(O_a_5@meta.data$DF.classifications_0.25_0.18_51)
+O_a_5@meta.data$Doublet <- O_a_5@meta.data$DF.classifications_0.25_0.18_51
+pdf('~/Ovary/O_a_5.pdf',width=6,height=6)
+DimPlot(O_a_5, reduction = "umap", group.by='Doublet')
+dev.off()
+
+#########################
+
+O_a_6.data <- Read10X(data.dir = "~/scRNA/O-a-6")
+O_a_6 <- CreateSeuratObject(O_a_6.data, min.cells = 1)
+O_a_6@meta.data$age<- c("O")
+O_a_6@meta.data$group<- c("o")
+#Y_r_1@meta.data$sample<- "M.Y"
+
+O_a_6[["percent.mt"]] <- PercentageFeatureSet(O_a_6, pattern = "^mt-")
+O_a_6 <- subset(O_a_6, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 15)
+
+O_a_6 <- NormalizeData(O_a_6)
+O_a_6 <- FindVariableFeatures(O_a_6, selection.method = "vst", nfeatures = 2000)
+O_a_6 <- ScaleData(O_a_6)
+O_a_6 <- RunPCA(O_a_6, verbose = FALSE)
+O_a_6 <- FindNeighbors(O_a_6, reduction = "pca", dims = 1:15)
+O_a_6 <- FindClusters(O_a_6, reduction.type =  "pca", resolution = 0.6, dims.use = 1:15) 
+O_a_6 <- RunUMAP(O_a_6, dims = 1:15)
+
+sweep.res.list <- paramSweep_v3(O_a_6, PCs = 1:15)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+annotations <- O_a_6@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.0299*nrow(O_a_6@meta.data))
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+mpK<-as.numeric(as.vector(bcmvn$pK[which.max(bcmvn$BCmetric)]))
+O_a_6 <- doubletFinder_v3(O_a_6, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+pANN_value <- paste0("pANN_",0.25,"_",mpK,'_',nExp_poi)
+O_a_6 <- doubletFinder_v3(O_a_6, PCs = 1:15, pN = 0.25, pK = mpK, nExp = nExp_poi.adj, reuse.pANN = pANN_value, sct = FALSE)
+
+table(O_a_6@meta.data$DF.classifications_0.25_0.005_67)
+O_a_6@meta.data$Doublet <- O_a_6@meta.data$DF.classifications_0.25_0.005_67
+pdf('~/Ovary/O_a_6.pdf',width=6,height=6)
+DimPlot(O_a_6, reduction = "umap", group.by='Doublet')
+dev.off()
+
+############################
+
+Y_r_1 <- subset(Y_r_1,Doublet=='Singlet')
+Y_r_2 <- subset(Y_r_2,Doublet=='Singlet')
+Y_r_3 <- subset(Y_r_3,Doublet=='Singlet')
+Y_r_4 <- subset(Y_r_4,Doublet=='Singlet')
+Y_r_5 <- subset(Y_r_5,Doublet=='Singlet')
+M_r_1 <- subset(M_r_1,Doublet=='Singlet')
+M_r_2 <- subset(M_r_2,Doublet=='Singlet')
+M_r_3 <- subset(M_r_3,Doublet=='Singlet')
+M_ir_1 <- subset(M_ir_1,Doublet=='Singlet')
+M_ir_2 <- subset(M_ir_2,Doublet=='Singlet')
+M_ir_3 <- subset(M_ir_3,Doublet=='Singlet')
+M_ir_4 <- subset(M_ir_4,Doublet=='Singlet')
+O_a_1 <- subset(O_a_1,Doublet=='Singlet')
+O_a_2 <- subset(O_a_2,Doublet=='Singlet')
+O_a_3 <- subset(O_a_3,Doublet=='Singlet')
+O_a_4 <- subset(O_a_4,Doublet=='Singlet')
+O_a_5 <- subset(O_a_5,Doublet=='Singlet')
+O_a_6 <- subset(O_a_6,Doublet=='Singlet')
+
+saveRDS(Y_r_1, file = "Y_r_1_DF.rds")
+saveRDS(Y_r_2, file = "Y_r_2_DF.rds")
+saveRDS(Y_r_3, file = "Y_r_3_DF.rds")
+saveRDS(Y_r_4, file = "Y_r_4_DF.rds")
+saveRDS(Y_r_5, file = "Y_r_5_DF.rds")
+saveRDS(M_r_1, file = "M_r_1_DF.rds")
+saveRDS(M_r_2, file = "M_r_2_DF.rds")
+saveRDS(M_r_3, file = "M_r_3_DF.rds")
+saveRDS(M_ir_1, file = "M_ir_1_DF.rds")
+saveRDS(M_ir_2, file = "M_ir_2_DF.rds")
+saveRDS(M_ir_3, file = "M_ir_3_DF.rds")
+saveRDS(M_ir_4, file = "M_ir_4_DF.rds")
+saveRDS(O_a_1, file = "O_a_1_DF.rds")
+saveRDS(O_a_2, file = "O_a_2_DF.rds")
+saveRDS(O_a_3, file = "O_a_3_DF.rds")
+saveRDS(O_a_4, file = "O_a_4_DF.rds")
+saveRDS(O_a_5, file = "O_a_5_DF.rds")
+saveRDS(O_a_6, file = "O_a_6_DF.rds")
+
+
+Y_r_1<-readRDS('Y_r_1_DF.rds')
+Y_r_2<-readRDS('Y_r_2_DF.rds')
+Y_r_3<-readRDS('Y_r_3_DF.rds')
+Y_r_4<-readRDS('Y_r_4_DF.rds')
+Y_r_5<-readRDS('Y_r_5_DF.rds')
+M_r_1<-readRDS('M_r_1_DF.rds')
+M_r_2<-readRDS('M_r_2_DF.rds')
+M_r_3<-readRDS('M_r_3_DF.rds')
+M_ir_1<-readRDS('M_ir_1_DF.rds')
+M_ir_2<-readRDS('M_ir_2_DF.rds')
+M_ir_3<-readRDS('M_ir_3_DF.rds')
+M_ir_4<-readRDS('M_ir_4_DF.rds')
+O_a_1<-readRDS('O_a_1_DF.rds')
+O_a_2<-readRDS('O_a_2_DF.rds')
+O_a_3<-readRDS('O_a_3_DF.rds')
+O_a_4<-readRDS('O_a_4_DF.rds')
+O_a_5<-readRDS('O_a_5_DF.rds')
+O_a_6<-readRDS('O_a_6_DF.rds')
+
+###########################
+library(harmony)
+library(Rcpp)
+Y_r_1@meta.data$orig.ident<- "Y_r_1"
+Y_r_2@meta.data$orig.ident<- "Y_r_2"
+Y_r_3@meta.data$orig.ident<- "Y_r_3"
+Y_r_4@meta.data$orig.ident<- "Y_r_4"
+Y_r_5@meta.data$orig.ident<- "Y_r_5"
+M_r_1@meta.data$orig.ident<- "M_r_1"
+M_r_2@meta.data$orig.ident<- "M_r_2"
+M_r_3@meta.data$orig.ident<- "M_r_3"
+M_ir_1@meta.data$orig.ident<- "M_ir_1"
+M_ir_2@meta.data$orig.ident<- "M_ir_2"
+M_ir_3@meta.data$orig.ident<- "M_ir_3"
+M_ir_4@meta.data$orig.ident<- "M_ir_4"
+O_a_1@meta.data$orig.ident<- "O_a_1"
+O_a_2@meta.data$orig.ident<- "O_a_2"
+O_a_3@meta.data$orig.ident<- "O_a_3"
+O_a_4@meta.data$orig.ident<- "O_a_4"
+O_a_5@meta.data$orig.ident<- "O_a_5"
+O_a_6@meta.data$orig.ident<- "O_a_6"
+
+Ovary <- merge(Y_r_1, y = c(Y_r_2, Y_r_3, Y_r_4, Y_r_5, M_r_1, M_r_2, M_r_3, M_ir_1, M_ir_2, M_ir_3, M_ir_4, O_a_1, O_a_2, O_a_3, O_a_4, O_a_5, O_a_6), add.cell.ids = c("Y_r_1", "Y_r_2", "Y_r_3", "Y_r_4", "Y_r_5", "M_r_1", "M_r_2", "M_r_3", "M_ir_1", "M_ir_2", "M_ir_3", "M_ir_4", "O_a_1", "O_a_2", "O_a_3", "O_a_4", "O_a_5", "O_a_6"), project = "Mouse_Ovary")
+
+saveRDS(Ovary, file = "Ovary_merged.rds")
+
+VlnPlot(Ovary, group.by = "orig.ident", features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), pt.size=0.00, ncol = 3)
+
+Ovary <- Ovary %>%
+  Seurat::NormalizeData(verbose = FALSE) %>%
+  FindVariableFeatures(selection.method = "vst", nfeatures = 2000) %>% 
+  ScaleData(verbose = FALSE) %>% 
+  RunPCA(pc.genes = scRNA.list@var.features, npcs = 20, verbose = FALSE)
+
+Ovary <- Ovary %>% 
+  RunHarmony("orig.ident", plot_convergence = TRUE)
+p1 <- DimPlot(object = Ovary, reduction = "harmony", pt.size = .1, group.by = "orig.ident")
+p2 <- VlnPlot(object = Ovary, features = "harmony_1", group.by = "orig.ident", pt.size = .1)
+plot_grid(p1,p2)
+
+Ovary <- Ovary %>% 
+  RunUMAP(reduction = "harmony", dims = 1:10) %>% 
+  FindNeighbors(reduction = "harmony", dims = 1:10) %>% 
+  FindClusters(resolution = 0.1) %>% 
+  identity()
+
+p0<-DimPlot(Ovary, reduction = "umap", group.by = "orig.ident", pt.size = .1)
+p1<-DimPlot(Ovary, reduction = "umap", group.by = "age", pt.size = .1)
+p2<-DimPlot(Ovary, reduction = "umap", group.by = "age", pt.size = .1, split.by = 'orig.ident')
+p3<-DimPlot(Ovary, reduction = "umap", label = TRUE, pt.size = .1, split.by = 'age')
+p4<-DimPlot(Ovary, reduction = "umap", label = TRUE, pt.size = .1)
+
+saveRDS(Ovary, file = "Ovary_18samples.rds")
+
+
+Ovary <- merge(Y_r_1, y = c(Y_r_2, Y_r_3, Y_r_4, Y_r_5, M_r_1, M_r_2, M_r_3, M_ir_1, M_ir_2, M_ir_3, M_ir_4, O_a_1, O_a_3, O_a_4, O_a_5, O_a_6), add.cell.ids = c("Y_r_1", "Y_r_2", "Y_r_3", "Y_r_4", "Y_r_5", "M_r_1", "M_r_2", "M_r_3", "M_ir_1", "M_ir_2", "M_ir_3", "M_ir_4", "O_a_1", "O_a_3", "O_a_4", "O_a_5", "O_a_6"), project = "Mouse_Ovary")
+
+saveRDS(Ovary, file = "Ovary_17samples.rds")
+Ovary<-readRDS('Ovary_17samples.rds')
+
+markers <- FindAllMarkers(Ovary, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.csv(markers,file="ovary17-10-0.1-cluster-markers-230216.csv")
+
+Ovary.renamed <- RenameIdents(Ovary, `0` = "Granulosa cells (Nppc-high)", `1` = "Stromal cells", `2` = "Granulosa cells (Inhbb-high)",
+                              `3` = "Theca cells", `4` = "Lars2-high cells", `5` = "Epithelial cells", `6` = "Macrophage", `7` = "Endothelial cells", `8` = "Granulosa cells (Amh-high)", `9` = "Luteal cells",
+                              `10` = "Oocytes", `11` = "NK cells" )
+DimPlot(Ovary.renamed, label = FALSE)
+Idents(Ovary.renamed) <- factor(Idents(Ovary.renamed), levels = c("Granulosa cells (Amh-high)", "Granulosa cells (Inhbb-high)", 
+                                                                  "Granulosa cells (Nppc-high)",  "Luteal cells", "Theca cells", "Stromal cells", "Epithelial cells", "Endothelial cells", "Macrophage", "NK cells", "Oocytes", "Lars2-high cells"))
+markers.to.plot <- c("Foxl2", "Amh", "Top2a", "Ube2c","Inhbb", "Npr2","Fshr","Cyp19a1","Inhba","Nppc","Nr5a2", "Lhcgr","Sfrp4","Ptgfr","S100a6", "Cyp17a1","Cyp11a1","Aldh1a1","Tcf21", "Mgp", "Dcn","Epcam", "Cdh5", "Lyz2", "Nkg7", "Ooep", "Lars2")
+DotPlot(Ovary.renamed, features = rev(markers.to.plot), cols = c("white","#fb000a"), dot.scale = 10) + RotatedAxis()
+
+markers.to.plot <- c( "Amh", "Inhbb","Top2a","Inhba","Nppc", "Sfrp4","S100a6", "Cyp11a1","Aldh1a1", "Tcf21", "Epcam", "Cdh5", "Lyz2", "Nkg7", "Ooep", "Lars2")
+DotPlot(Ovary.renamed, features = rev(markers.to.plot), cols = c("white","#fb000a"), dot.scale = 10) + RotatedAxis()
+
+
+FeaturePlot(Ovary.renamed, features = c("Amh", "Inhbb","Top2a","Inhba","Nppc", "Sfrp4","S100a6", "Cyp11a1","Aldh1a1", "Tcf21", "Epcam", "Cdh5", "Lyz2", "Nkg7", "Ooep", "Lars2", "Cyp17a1"), min.cutoff = "q9")
+
+saveRDS(Ovary.renamed, file = "Ovary_17samples-clustered.rds")
+
+cellnumber<-table(Ovary.renamed$orig.ident)
+write.csv(cellnumber, "cellnumber-YMO_18sample.csv")
+cellcount<-table(Idents(Ovary.renamed),Ovary.renamed$orig.ident)
+write.csv(cellcount, "cellcount——cluster-YMO_18sample.csv")
+
+############################GC_subset_analysis
+GC_subset<-readRDS('GC_renamed.rds')
+cellnumber_GC<-table(GC_subset$orig.ident)
+write.csv(cellnumber_GC, "cellnumber_GC.csv")
+cellcount_GC<-table(Idents(GC_subset),GC_subset$orig.ident)
+write.csv(cellcount_GC, "cellcount_GC_cluster.csv")
+VlnPlot(GC_subset, features = c("Cdkn1b"))
+VlnPlot(GC_subset, features = c("Cyp19a1", "Amh", "Fshr","Inhbb"),split.by = "age")
+
+
+############################DEG_O VS Y
+Ovary.renamed<-readRDS('Ovary_17samples-clustered.rds')
+BiocManager::install ("MAST") 
+library(MAST)
+OvsY_GC_A <- FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Granulosa cells (Amh-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+OvsY_GC_I<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Granulosa cells (Inhbb-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+OvsY_GC_N<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Granulosa cells (Nppc-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+OvsY_LC<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Luteal cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+OvsY_TC<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Theca cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+OvsY_SC<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Stromal cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+OvsY_EPC<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Epithelial cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+OvsY_EC<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Endothelial cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+OvsY_M<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Macrophage",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+OvsY_NK<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "NK cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+OvsY_O<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Oocytes",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+OvsY_L2<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Lars2-high cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+
+write.table(OvsY_GC_A,"OvsY_GC_A",sep="\t")
+write.table(OvsY_GC_I,"OvsY_GC_I",sep="\t")
+write.table(OvsY_GC_N,"OvsY_GC_N",sep="\t")
+write.table(OvsY_LC,"OvsY_LC",sep="\t")
+write.table(OvsY_TC,"OvsY_TC",sep="\t")
+write.table(OvsY_SC,"OvsY_SC",sep="\t")
+write.table(OvsY_EPC,"OvsY_EPC",sep="\t")
+write.table(OvsY_EC,"OvsY_EC",sep="\t")
+write.table(OvsY_M,"OvsY_M",sep="\t")
+write.table(OvsY_NK,"OvsY_NK",sep="\t")
+write.table(OvsY_O,"OvsY_O",sep="\t")
+write.table(OvsY_L2,"OvsY_L2",sep="\t")
+
+all.genes <- rownames(Ovary.renamed)
+OvsY_GC_A_logfc<-FindMarkers(Ovary.renamed,subset.ident = "Granulosa cells (Amh-high)",ident.1 = "O",ident.2 = "Y",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+OvsY_GC_I_logfc<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Granulosa cells (Inhbb-high)",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+OvsY_GC_N_logfc<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Granulosa cells (Nppc-high)",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+OvsY_LC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Luteal cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+OvsY_TC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Theca cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+OvsY_SC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Stromal cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+OvsY_EPC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Epithelial cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+OvsY_EC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Endothelial cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+OvsY_M_logfc<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Macrophage",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+OvsY_NK_logfc<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "NK cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+OvsY_O_logfc<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Oocytes",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+OvsY_L2_logfc<-FindMarkers(Ovary.renamed, ident.1 = "O", ident.2 ="Y",subset.ident = "Lars2-high cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+
+write.table(OvsY_GC_A_logfc,"OvsY_GC_A_logfc",sep="\t")
+write.table(OvsY_GC_I_logfc,"OvsY_GC_I_logfc",sep="\t")
+write.table(OvsY_GC_N_logfc,"OvsY_GC_N_logfc",sep="\t")
+write.table(OvsY_LC_logfc,"OvsY_LC_logfc",sep="\t")
+write.table(OvsY_TC_logfc,"OvsY_TC_logfc",sep="\t")
+write.table(OvsY_SC_logfc,"OvsY_SC_logfc",sep="\t")
+write.table(OvsY_EPC_logfc,"OvsY_EPC_logfc",sep="\t")
+write.table(OvsY_EC_logfc,"OvsY_EC_logfc",sep="\t")
+write.table(OvsY_M_logfc,"OvsY_M_logfc",sep="\t")
+write.table(OvsY_NK_logfc,"OvsY_NK_logfc",sep="\t")
+write.table(OvsY_O_logfc,"OvsY_O_logfc",sep="\t")
+write.table(OvsY_L2_logfc,"OvsY_L2_logfc",sep="\t")
+
+#############################Mir vs Mr
+
+MirvsMr_GC_A <- FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Granulosa cells (Amh-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MirvsMr_GC_I<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Granulosa cells (Inhbb-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MirvsMr_GC_N<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Granulosa cells (Nppc-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MirvsMr_LC<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Luteal cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MirvsMr_TC<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Theca cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MirvsMr_SC<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Stromal cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MirvsMr_EPC<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Epithelial cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MirvsMr_EC<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Endothelial cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MirvsMr_M<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Macrophage",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MirvsMr_NK<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "NK cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MirvsMr_O<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Oocytes",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MirvsMr_L2<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Lars2-high cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+
+write.table(MirvsMr_GC_A,"MirvsMr_GC_A",sep="\t")
+write.table(MirvsMr_GC_I,"MirvsMr_GC_I",sep="\t")
+write.table(MirvsMr_GC_N,"MirvsMr_GC_N",sep="\t")
+write.table(MirvsMr_LC,"MirvsMr_LC",sep="\t")
+write.table(MirvsMr_TC,"MirvsMr_TC",sep="\t")
+write.table(MirvsMr_SC,"MirvsMr_SC",sep="\t")
+write.table(MirvsMr_EPC,"MirvsMr_EPC",sep="\t")
+write.table(MirvsMr_EC,"MirvsMr_EC",sep="\t")
+write.table(MirvsMr_M,"MirvsMr_M",sep="\t")
+write.table(MirvsMr_NK,"MirvsMr_NK",sep="\t")
+write.table(MirvsMr_O,"MirvsMr_O",sep="\t")
+write.table(MirvsMr_L2,"MirvsMr_L2",sep="\t")
+
+
+MirvsMr_GC_A_logfc<-FindMarkers(Ovary.renamed,subset.ident = "Granulosa cells (Amh-high)",ident.1 = "M_ir",ident.2 = "M_r",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MirvsMr_GC_I_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Granulosa cells (Inhbb-high)",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MirvsMr_GC_N_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Granulosa cells (Nppc-high)",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MirvsMr_LC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Luteal cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MirvsMr_TC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Theca cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MirvsMr_SC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Stromal cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MirvsMr_EPC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Epithelial cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MirvsMr_EC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Endothelial cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MirvsMr_M_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Macrophage",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MirvsMr_NK_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "NK cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MirvsMr_O_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Oocytes",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MirvsMr_L2_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_ir", ident.2 ="M_r",subset.ident = "Lars2-high cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+
+write.table(MirvsMr_GC_A_logfc,"MirvsMr_GC_A_logfc",sep="\t")
+write.table(MirvsMr_GC_I_logfc,"MirvsMr_GC_I_logfc",sep="\t")
+write.table(MirvsMr_GC_N_logfc,"MirvsMr_GC_N_logfc",sep="\t")
+write.table(MirvsMr_LC_logfc,"MirvsMr_LC_logfc",sep="\t")
+write.table(MirvsMr_TC_logfc,"MirvsMr_TC_logfc",sep="\t")
+write.table(MirvsMr_SC_logfc,"MirvsMr_SC_logfc",sep="\t")
+write.table(MirvsMr_EPC_logfc,"MirvsMr_EPC_logfc",sep="\t")
+write.table(MirvsMr_EC_logfc,"MirvsMr_EC_logfc",sep="\t")
+write.table(MirvsMr_M_logfc,"MirvsMr_M_logfc",sep="\t")
+write.table(MirvsMr_NK_logfc,"MirvsMr_NK_logfc",sep="\t")
+write.table(MirvsMr_O_logfc,"MirvsMr_O_logfc",sep="\t")
+write.table(MirvsMr_L2_logfc,"MirvsMr_L2_logfc",sep="\t")
+
+#############################M vs Y
+MvsY_GC_A <- FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Granulosa cells (Amh-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MvsY_GC_I<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Granulosa cells (Inhbb-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MvsY_GC_N<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Granulosa cells (Nppc-high)",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MvsY_LC<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Luteal cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MvsY_TC<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Theca cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MvsY_SC<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Stromal cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MvsY_EPC<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Epithelial cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MvsY_EC<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Endothelial cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MvsY_M<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Macrophage",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MvsY_NK<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "NK cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MvsY_O<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Oocytes",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+MvsY_L2<-FindMarkers(Ovary.renamed, ident.1 = "M", ident.2 ="Y",subset.ident = "Lars2-high cells",group.by="age", min.pct = 0.25,logfc.threshold=0.25,test.use="MAST")
+
+write.table(MvsY_GC_A,"MvsY_GC_A",sep="\t")
+write.table(MvsY_GC_I,"MvsY_GC_I",sep="\t")
+write.table(MvsY_GC_N,"MvsY_GC_N",sep="\t")
+write.table(MvsY_LC,"MvsY_LC",sep="\t")
+write.table(MvsY_TC,"MvsY_TC",sep="\t")
+write.table(MvsY_SC,"MvsY_SC",sep="\t")
+write.table(MvsY_EPC,"MvsY_EPC",sep="\t")
+write.table(MvsY_EC,"MvsY_EC",sep="\t")
+write.table(MvsY_M,"MvsY_M",sep="\t")
+write.table(MvsY_NK,"MvsY_NK",sep="\t")
+write.table(MvsY_O,"MvsY_O",sep="\t")
+write.table(MvsY_L2,"MvsY_L2",sep="\t")
+
+all.genes <- rownames(Ovary.renamed)
+MrvsY_GC_A_logfc<-FindMarkers(Ovary.renamed,subset.ident = "Granulosa cells (Amh-high)",ident.1 = "M_r",ident.2 = "Y",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MrvsY_GC_I_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_r", ident.2 ="Y",subset.ident = "Granulosa cells (Inhbb-high)",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MrvsY_GC_N_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_r", ident.2 ="Y",subset.ident = "Granulosa cells (Nppc-high)",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MrvsY_LC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_r", ident.2 ="Y",subset.ident = "Luteal cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MrvsY_TC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_r", ident.2 ="Y",subset.ident = "Theca cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MrvsY_SC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_r", ident.2 ="Y",subset.ident = "Stromal cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MrvsY_EPC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_r", ident.2 ="Y",subset.ident = "Epithelial cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MrvsY_EC_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_r", ident.2 ="Y",subset.ident = "Endothelial cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MrvsY_M_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_r", ident.2 ="Y",subset.ident = "Macrophage",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MrvsY_NK_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_r", ident.2 ="Y",subset.ident = "NK cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MrvsY_O_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_r", ident.2 ="Y",subset.ident = "Oocytes",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+MrvsY_L2_logfc<-FindMarkers(Ovary.renamed, ident.1 = "M_r", ident.2 ="Y",subset.ident = "Lars2-high cells",features = all.genes, group.by = "age",logfc.threshold = -Inf,min.pct = -Inf,test.use = "MAST")
+
+write.table(MrvsY_GC_A_logfc,"MrvsY_GC_A_logfc",sep="\t")
+write.table(MrvsY_GC_I_logfc,"MrvsY_GC_I_logfc",sep="\t")
+write.table(MrvsY_GC_N_logfc,"MrvsY_GC_N_logfc",sep="\t")
+write.table(MrvsY_LC_logfc,"MrvsY_LC_logfc",sep="\t")
+write.table(MrvsY_TC_logfc,"MrvsY_TC_logfc",sep="\t")
+write.table(MrvsY_SC_logfc,"MrvsY_SC_logfc",sep="\t")
+write.table(MrvsY_EPC_logfc,"MrvsY_EPC_logfc",sep="\t")
+write.table(MrvsY_EC_logfc,"MrvsY_EC_logfc",sep="\t")
+write.table(MrvsY_M_logfc,"MrvsY_M_logfc",sep="\t")
+write.table(MrvsY_NK_logfc,"MrvsY_NK_logfc",sep="\t")
+write.table(MrvsY_O_logfc,"MrvsY_O_logfc",sep="\t")
+write.table(MrvsY_L2_logfc,"MrvsY_L2_logfc",sep="\t")
+
+##########################Cdkn1a+ cell
+Ovary.renamed<-readRDS('Ovary_17samples-clustered.rds')
+DimPlot(Ovary.renamed)
+Cdkn1a_Ovary1<-subset(Ovary.renamed, subset = Cdkn1a > 1)
+Cdkn2a_Ovary1<-subset(Ovary.renamed, subset = Cdkn2a > 1)
+DimPlot(Cdkn1a_Ovary1)
+DimPlot(Cdkn2a_Ovary1)
+cellcount_Cdkn1a_Ovary1<-table(Idents(Cdkn1a_Ovary1),Cdkn1a_Ovary1$orig.ident)
+write.csv(cellcount_Cdkn1a_Ovary1, "cellcount_Cdkn1a_Ovary1.csv")
+cellcount_Cdkn2a_Ovary1<-table(Idents(Cdkn2a_Ovary1),Cdkn2a_Ovary1$orig.ident)
+write.csv(cellcount_Cdkn2a_Ovary1, "cellcount_Cdkn2a_Ovary1.csv")
+
+##################################delete Lars2
+
