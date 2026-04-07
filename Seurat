@@ -768,9 +768,7 @@ O_a_4@meta.data$orig.ident<- "O_a_4"
 O_a_5@meta.data$orig.ident<- "O_a_5"
 O_a_6@meta.data$orig.ident<- "O_a_6"
 
-Ovary <- merge(Y_r_1, y = c(Y_r_2, Y_r_3, Y_r_4, Y_r_5, M_r_1, M_r_2, M_r_3, M_ir_1, M_ir_2, M_ir_3, M_ir_4, O_a_1, O_a_2, O_a_3, O_a_4, O_a_5, O_a_6), add.cell.ids = c("Y_r_1", "Y_r_2", "Y_r_3", "Y_r_4", "Y_r_5", "M_r_1", "M_r_2", "M_r_3", "M_ir_1", "M_ir_2", "M_ir_3", "M_ir_4", "O_a_1", "O_a_2", "O_a_3", "O_a_4", "O_a_5", "O_a_6"), project = "Mouse_Ovary")
-
-saveRDS(Ovary, file = "Ovary_merged.rds")
+Ovary <- merge(Y_r_1, y = c(Y_r_2, Y_r_3, Y_r_4, Y_r_5, M_r_1, M_r_2, M_r_3, M_ir_1, M_ir_2, M_ir_3, M_ir_4, O_a_1, O_a_3, O_a_4, O_a_5, O_a_6), add.cell.ids = c("Y_r_1", "Y_r_2", "Y_r_3", "Y_r_4", "Y_r_5", "M_r_1", "M_r_2", "M_r_3", "M_ir_1", "M_ir_2", "M_ir_3", "M_ir_4", "O_a_1", "O_a_3", "O_a_4", "O_a_5", "O_a_6"), project = "Mouse_Ovary") ###sample O_a_2 was excluded due to bad quality###
 
 VlnPlot(Ovary, group.by = "orig.ident", features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), pt.size=0.00, ncol = 3)
 
@@ -792,29 +790,20 @@ Ovary <- Ovary %>%
   FindClusters(resolution = 0.1) %>% 
   identity()
 
-p0<-DimPlot(Ovary, reduction = "umap", group.by = "orig.ident", pt.size = .1)
-p1<-DimPlot(Ovary, reduction = "umap", group.by = "age", pt.size = .1)
-p2<-DimPlot(Ovary, reduction = "umap", group.by = "age", pt.size = .1, split.by = 'orig.ident')
-p3<-DimPlot(Ovary, reduction = "umap", label = TRUE, pt.size = .1, split.by = 'age')
-p4<-DimPlot(Ovary, reduction = "umap", label = TRUE, pt.size = .1)
-
-saveRDS(Ovary, file = "Ovary_18samples.rds")
-
-
-Ovary <- merge(Y_r_1, y = c(Y_r_2, Y_r_3, Y_r_4, Y_r_5, M_r_1, M_r_2, M_r_3, M_ir_1, M_ir_2, M_ir_3, M_ir_4, O_a_1, O_a_3, O_a_4, O_a_5, O_a_6), add.cell.ids = c("Y_r_1", "Y_r_2", "Y_r_3", "Y_r_4", "Y_r_5", "M_r_1", "M_r_2", "M_r_3", "M_ir_1", "M_ir_2", "M_ir_3", "M_ir_4", "O_a_1", "O_a_3", "O_a_4", "O_a_5", "O_a_6"), project = "Mouse_Ovary")
-
 saveRDS(Ovary, file = "Ovary_17samples.rds")
+
 Ovary<-readRDS('Ovary_17samples.rds')
 
 markers <- FindAllMarkers(Ovary, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 write.csv(markers,file="ovary17-10-0.1-cluster-markers-230216.csv")
 
 Ovary.renamed <- RenameIdents(Ovary, `0` = "Granulosa cells (Nppc-high)", `1` = "Stromal cells", `2` = "Granulosa cells (Inhbb-high)",
-                              `3` = "Theca cells", `4` = "Lars2-high cells", `5` = "Epithelial cells", `6` = "Macrophage", `7` = "Endothelial cells", `8` = "Granulosa cells (Amh-high)", `9` = "Luteal cells",
+                              `3` = "Theca cells", `4` = "Ambient DNA cells", `5` = "Epithelial cells", `6` = "Macrophage", `7` = "Endothelial cells", `8` = "Granulosa cells (Amh-high)", `9` = "Luteal cells",
                               `10` = "Oocytes", `11` = "NK cells" )
-DimPlot(Ovary.renamed, label = FALSE)
+
 Idents(Ovary.renamed) <- factor(Idents(Ovary.renamed), levels = c("Granulosa cells (Amh-high)", "Granulosa cells (Inhbb-high)", 
-                                                                  "Granulosa cells (Nppc-high)",  "Luteal cells", "Theca cells", "Stromal cells", "Epithelial cells", "Endothelial cells", "Macrophage", "NK cells", "Oocytes", "Lars2-high cells"))
+                                                                  "Granulosa cells (Nppc-high)",  "Luteal cells", "Theca cells", "Stromal cells", "Epithelial cells", "Endothelial cells", "Macrophage", "NK cells", "Oocytes", "Ambient DNA cells"))
+
 markers.to.plot <- c("Foxl2", "Amh", "Top2a", "Ube2c","Inhbb", "Npr2","Fshr","Cyp19a1","Inhba","Nppc","Nr5a2", "Lhcgr","Sfrp4","Ptgfr","S100a6", "Cyp17a1","Cyp11a1","Aldh1a1","Tcf21", "Mgp", "Dcn","Epcam", "Cdh5", "Lyz2", "Nkg7", "Ooep", "Lars2")
 DotPlot(Ovary.renamed, features = rev(markers.to.plot), cols = c("white","#fb000a"), dot.scale = 10) + RotatedAxis()
 
